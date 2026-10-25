@@ -1,0 +1,8 @@
+relationship e7b638a6-c860-5866-bc25-f44cfb899fde
+	fromColumn: Arrivals.Month
+	toColumn: Calendar.Date
+
+relationship ade69486-cd7f-589d-81c0-ea54d59f9f39
+	fromColumn: Arrivals.'Vessel Type'
+	toColumn: 'Vessel Type'.'Vessel Type'
+

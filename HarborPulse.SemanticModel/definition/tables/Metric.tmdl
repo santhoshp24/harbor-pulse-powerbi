@@ -1,0 +1,35 @@
+table Metric
+	lineageTag: 655bdfe7-5103-5f27-a1e3-2fe426859a38
+
+	column Metric
+		dataType: string
+		lineageTag: d5853459-211f-5b94-85ef-f655a037def4
+		summarizeBy: none
+		sourceColumn: Metric
+		sortByColumn: 'Metric Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Metric Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 646a5b88-b636-52cd-84e8-783bd803ee60
+		summarizeBy: none
+		sourceColumn: Metric Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Metric = m
+		mode: import
+		source =
+				let
+				    Source = #table(
+				        type table [Metric = text, Metric Sort = Int64.Type],
+				        {{"Arrivals", 1}, {"Gross Tonnage", 2}, {"GT per Arrival", 3}}
+				    )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

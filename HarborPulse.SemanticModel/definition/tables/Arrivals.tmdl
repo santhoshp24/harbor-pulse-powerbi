@@ -1,0 +1,57 @@
+table Arrivals
+	lineageTag: 90f06aad-1667-5ac9-ad25-0268a2ee9108
+
+	column Month
+		dataType: dateTime
+		isHidden
+		formatString: mmm yyyy
+		lineageTag: 8984664b-0e33-5011-b69a-63c34060eddc
+		summarizeBy: none
+		sourceColumn: Month
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Vessel Type'
+		dataType: string
+		isHidden
+		lineageTag: 0ec44cf2-cf59-567b-a10b-48cc8978f463
+		summarizeBy: none
+		sourceColumn: Vessel Type
+
+		annotation SummarizationSetBy = Automatic
+
+	column Vessels
+		dataType: int64
+		isHidden
+		formatString: #,0
+		lineageTag: a8e358d8-33db-5e91-a1f5-ed2d7f2d461b
+		summarizeBy: sum
+		sourceColumn: Vessels
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Gross Tonnage (k GT)'
+		dataType: double
+		isHidden
+		formatString: #,0.0
+		lineageTag: d2f4ab98-a56c-5466-b68f-122596793ecb
+		summarizeBy: sum
+		sourceColumn: Gross Tonnage (k GT)
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Arrivals = m
+		mode: import
+		source =
+				let
+				    Source = Csv.Document(File.Contents(CsvFolder & "\vessel_arrivals_monthly.csv"), [Delimiter = ",", Columns = 4, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
+				    Typed = Table.TransformColumnTypes(Promoted, {{"month", type date}, {"vessel_type", type text}, {"number_of_vessels", Int64.Type}, {"gross_tonnage", type number}}, "en-US"),
+				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"vessel_type", "Vessel Type"}, {"number_of_vessels", "Vessels"}, {"gross_tonnage", "Gross Tonnage (k GT)"}})
+				in
+				    Renamed
+
+	annotation PBI_ResultType = Table
+

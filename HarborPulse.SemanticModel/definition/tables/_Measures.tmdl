@@ -1,0 +1,529 @@
+table _Measures
+	lineageTag: 18897dc9-15ba-54a1-bdab-13e01c9756d1
+
+	/// Number of vessel arrivals.
+	measure 'Vessel Arrivals' = SUM ( Arrivals[Vessels] )
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: e40eebe0-06c9-5d8d-9411-0599364eeae0
+
+	/// Gross tonnage of arriving vessels. The source column is in thousands of GT, so it is scaled by 1,000.
+	measure 'Gross Tonnage' = SUM ( Arrivals[Gross Tonnage (k GT)] ) * 1000
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: c664c411-95b9-579e-b369-17d13ca76a4f
+
+	/// Average gross tonnage per vessel arrival: a proxy for average ship size.
+	measure 'GT per Arrival' = DIVIDE ( [Gross Tonnage], [Vessel Arrivals] )
+		formatString: #,0
+		displayFolder: 1 Core
+		lineageTag: 4dd6334a-7150-5dd1-9b5b-002118ef9799
+
+	/// Latest month in the dataset, ignoring all filters.
+	measure 'Last Data Date' = CALCULATE ( MAX ( Arrivals[Month] ), REMOVEFILTERS () )
+		formatString: mmm yyyy
+		displayFolder: 1 Core
+		lineageTag: e70a073e-08e3-5c24-b83b-15a2287b2368
+
+	/// End of the latest month with data in the current filter context. Trailing-12-month measures end here.
+	measure 'Anchor Date' = EOMONTH ( MAX ( Arrivals[Month] ), 0 )
+		formatString: dd mmm yyyy
+		displayFolder: 1 Core
+		lineageTag: dcb4a4ba-8ebb-55a8-b77f-b94bf001958c
+
+	/// Vessel Arrivals in the 12 months ending at the anchor month.
+	measure 'Arrivals L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [Vessel Arrivals], DATESINPERIOD ( 'Calendar'[Date], a, -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: 572647bd-5548-5741-a198-57188d485311
+
+	/// Vessel Arrivals in the 12 months before the trailing window.
+	measure 'Arrivals Prior L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [Vessel Arrivals], DATESINPERIOD ( 'Calendar'[Date], EOMONTH ( a, -12 ), -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: 56c0363f-fda0-5abd-bca3-b2283ea2437f
+
+	/// Change in trailing-12-month vessel arrivals against the prior 12 months.
+	measure 'Arrivals YoY %' = DIVIDE ( [Arrivals L12M] - [Arrivals Prior L12M], [Arrivals Prior L12M] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 2 Trailing 12M
+		lineageTag: 2e737ea1-fb04-5848-8b13-73ccb0455f17
+
+	/// Gross Tonnage in the 12 months ending at the anchor month.
+	measure 'GT L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [Gross Tonnage], DATESINPERIOD ( 'Calendar'[Date], a, -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: 967451f6-f1a7-56b6-9b26-5783a09953a3
+
+	/// Gross Tonnage in the 12 months before the trailing window.
+	measure 'GT Prior L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [Gross Tonnage], DATESINPERIOD ( 'Calendar'[Date], EOMONTH ( a, -12 ), -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: f51ede1f-4dea-531d-93d6-f3625983955c
+
+	/// Change in trailing-12-month gross tonnage against the prior 12 months.
+	measure 'GT YoY %' = DIVIDE ( [GT L12M] - [GT Prior L12M], [GT Prior L12M] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 2 Trailing 12M
+		lineageTag: dea03389-10e4-5e84-a970-462e38d09e3d
+
+	/// GT per Arrival in the 12 months ending at the anchor month.
+	measure 'GT per Arrival L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [GT per Arrival], DATESINPERIOD ( 'Calendar'[Date], a, -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: ff18e817-9967-56ed-9af4-fcf956b64f9d
+
+	/// GT per Arrival in the 12 months before the trailing window.
+	measure 'GT per Arrival Prior L12M' =
+			VAR a = [Anchor Date]
+			RETURN
+			    IF ( NOT ISBLANK ( a ), CALCULATE ( [GT per Arrival], DATESINPERIOD ( 'Calendar'[Date], EOMONTH ( a, -12 ), -12, MONTH ) ) )
+		formatString: #,0
+		displayFolder: 2 Trailing 12M
+		lineageTag: 87fda5a8-1eef-506d-af5c-21847d016f4a
+
+	/// Change in trailing-12-month gt per arrival against the prior 12 months.
+	measure 'GT per Arrival YoY %' = DIVIDE ( [GT per Arrival L12M] - [GT per Arrival Prior L12M], [GT per Arrival Prior L12M] )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 2 Trailing 12M
+		lineageTag: 750d0a05-e02c-5786-810c-7f87353acf7a
+
+	/// Trailing-12-month arrivals as a share of full-year 2019: the pre-COVID recovery index.
+	measure 'Arrivals vs 2019' =
+			VAR baseline = CALCULATE ( [Vessel Arrivals], REMOVEFILTERS ( 'Calendar' ), 'Calendar'[Year] = 2019 )
+			RETURN
+			    DIVIDE ( [Arrivals L12M], baseline )
+		formatString: 0%
+		displayFolder: 2 Trailing 12M
+		lineageTag: 0140bdf0-80cc-5e64-84ec-bfc294144bca
+
+	/// Trailing-12-month gross tonnage as a share of full-year 2019.
+	measure 'GT vs 2019' =
+			VAR baseline = CALCULATE ( [Gross Tonnage], REMOVEFILTERS ( 'Calendar' ), 'Calendar'[Year] = 2019 )
+			RETURN
+			    DIVIDE ( [GT L12M], baseline )
+		formatString: 0%
+		displayFolder: 2 Trailing 12M
+		lineageTag: aee95507-bae2-5e2d-b2f4-04a6d4fdd645
+
+	/// Compound annual growth rate of vessel arrivals between the first and last complete years in the selection.
+	measure 'Arrivals CAGR' =
+			VAR fullYears =
+			    FILTER (
+			        ADDCOLUMNS (
+			            VALUES ( 'Calendar'[Year] ),
+			            "@months", CALCULATE ( DISTINCTCOUNT ( Arrivals[Month] ) ),
+			            "@value", [Vessel Arrivals]
+			        ),
+			        [@months] = 12
+			    )
+			VAR firstYear = MINX ( fullYears, 'Calendar'[Year] )
+			VAR lastYear = MAXX ( fullYears, 'Calendar'[Year] )
+			VAR firstValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = firstYear ), [@value] )
+			VAR lastValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = lastYear ), [@value] )
+			RETURN
+			    IF ( lastYear > firstYear && firstValue > 0, POWER ( DIVIDE ( lastValue, firstValue ), 1 / ( lastYear - firstYear ) ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 3 Growth & Mix
+		lineageTag: a35fa5f5-9739-5f73-b7ad-58d955721aec
+
+	/// Compound annual growth rate of gross tonnage between the first and last complete years in the selection.
+	measure 'GT CAGR' =
+			VAR fullYears =
+			    FILTER (
+			        ADDCOLUMNS (
+			            VALUES ( 'Calendar'[Year] ),
+			            "@months", CALCULATE ( DISTINCTCOUNT ( Arrivals[Month] ) ),
+			            "@value", [Gross Tonnage]
+			        ),
+			        [@months] = 12
+			    )
+			VAR firstYear = MINX ( fullYears, 'Calendar'[Year] )
+			VAR lastYear = MAXX ( fullYears, 'Calendar'[Year] )
+			VAR firstValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = firstYear ), [@value] )
+			VAR lastValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = lastYear ), [@value] )
+			RETURN
+			    IF ( lastYear > firstYear && firstValue > 0, POWER ( DIVIDE ( lastValue, firstValue ), 1 / ( lastYear - firstYear ) ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 3 Growth & Mix
+		lineageTag: eedc8527-2c85-5c37-a655-90e99b54b41a
+
+	/// Compound annual growth rate of gt per arrival between the first and last complete years in the selection.
+	measure 'GT per Arrival CAGR' =
+			VAR fullYears =
+			    FILTER (
+			        ADDCOLUMNS (
+			            VALUES ( 'Calendar'[Year] ),
+			            "@months", CALCULATE ( DISTINCTCOUNT ( Arrivals[Month] ) ),
+			            "@value", [GT per Arrival]
+			        ),
+			        [@months] = 12
+			    )
+			VAR firstYear = MINX ( fullYears, 'Calendar'[Year] )
+			VAR lastYear = MAXX ( fullYears, 'Calendar'[Year] )
+			VAR firstValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = firstYear ), [@value] )
+			VAR lastValue = MAXX ( FILTER ( fullYears, 'Calendar'[Year] = lastYear ), [@value] )
+			RETURN
+			    IF ( lastYear > firstYear && firstValue > 0, POWER ( DIVIDE ( lastValue, firstValue ), 1 / ( lastYear - firstYear ) ) - 1 )
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 3 Growth & Mix
+		lineageTag: 33ed7ece-314d-5004-ac3a-512a451b8044
+
+	/// Share of arrivals within the selected vessel types.
+	measure 'Arrivals Share' = DIVIDE ( [Vessel Arrivals], CALCULATE ( [Vessel Arrivals], ALLSELECTED ( 'Vessel Type' ) ) )
+		formatString: 0.0%
+		displayFolder: 3 Growth & Mix
+		lineageTag: 832c1c06-932b-5a2a-8517-b15b47f3b50d
+
+	/// Share of gross tonnage within the selected vessel types.
+	measure 'GT Share' = DIVIDE ( [Gross Tonnage], CALCULATE ( [Gross Tonnage], ALLSELECTED ( 'Vessel Type' ) ) )
+		formatString: 0.0%
+		displayFolder: 3 Growth & Mix
+		lineageTag: 0ba649fd-68c4-513c-8aeb-7caa1956f198
+
+	/// The metric chosen in the Metric switcher (defaults to Arrivals).
+	measure 'Selected Metric' =
+			SWITCH (
+			    SELECTEDVALUE ( Metric[Metric], "Arrivals" ),
+			    "Arrivals", [Vessel Arrivals],
+			    "Gross Tonnage", [Gross Tonnage],
+			    "GT per Arrival", [GT per Arrival]
+			)
+		formatString: #,0
+		displayFolder: 4 Metric Switch
+		lineageTag: e93b5bc2-d12f-5e66-b478-e864e0cdc92d
+
+	/// 12-month rolling monthly average of the selected metric. Ratios are recomputed over the window.
+	measure 'Selected Metric 12M Avg' =
+			VAR periodEnd = MAX ( 'Calendar'[Date] )
+			VAR window = DATESINPERIOD ( 'Calendar'[Date], periodEnd, -12, MONTH )
+			VAR monthsInWindow = CALCULATE ( DISTINCTCOUNT ( Arrivals[Month] ), window )
+			VAR metric = SELECTEDVALUE ( Metric[Metric], "Arrivals" )
+			RETURN
+			    IF (
+			        MIN ( 'Calendar'[Date] ) <= [Last Data Date],
+			        SWITCH (
+			            metric,
+			            "Arrivals", DIVIDE ( CALCULATE ( [Vessel Arrivals], window ), monthsInWindow ),
+			            "Gross Tonnage", DIVIDE ( CALCULATE ( [Gross Tonnage], window ), monthsInWindow ),
+			            "GT per Arrival", CALCULATE ( [GT per Arrival], window )
+			        )
+			    )
+		formatString: #,0
+		displayFolder: 4 Metric Switch
+		lineageTag: 748150cd-e9b7-57a5-bf8b-867e5c709779
+
+	/// Selected metric per month, so partial years compare fairly with full years.
+	measure 'Selected Metric Monthly Avg' =
+			VAR metric = SELECTEDVALUE ( Metric[Metric], "Arrivals" )
+			RETURN
+			    IF (
+			        metric = "GT per Arrival",
+			        [GT per Arrival],
+			        DIVIDE ( [Selected Metric], DISTINCTCOUNT ( Arrivals[Month] ) )
+			    )
+		formatString: #,0
+		displayFolder: 4 Metric Switch
+		lineageTag: 82e27518-4760-5e29-a487-7e0fd9ef12e8
+
+	/// Trailing-12-month change of the selected metric.
+	measure 'Selected Metric YoY %' =
+			SWITCH (
+			    SELECTEDVALUE ( Metric[Metric], "Arrivals" ),
+			    "Arrivals", [Arrivals YoY %],
+			    "Gross Tonnage", [GT YoY %],
+			    "GT per Arrival", [GT per Arrival YoY %]
+			)
+		formatString: +0.0%;-0.0%;0.0%
+		displayFolder: 4 Metric Switch
+		lineageTag: 29a0be7d-e590-5d50-bf9a-e831f2f129b1
+
+	/// Rank of the vessel type on the selected metric.
+	measure 'Selected Metric Rank' = IF ( NOT ISBLANK ( [Selected Metric] ), RANKX ( ALLSELECTED ( 'Vessel Type' ), [Selected Metric] ) )
+		formatString: 0
+		displayFolder: 4 Metric Switch
+		lineageTag: a5512b1b-10e3-5569-bf60-77ffb75a21c0
+
+	/// Header text describing the active filters.
+	measure 'Selection Label' =
+			VAR firstYear = MIN ( 'Calendar'[Year] )
+			VAR lastYear = MAX ( 'Calendar'[Year] )
+			VAR typeCount = COUNTROWS ( VALUES ( 'Vessel Type'[Vessel Type] ) )
+			VAR allTypes = COUNTROWS ( ALL ( 'Vessel Type'[Vessel Type] ) )
+			VAR typeText =
+			    SWITCH (
+			        TRUE (),
+			        typeCount = allTypes, "All vessel types",
+			        typeCount = 1, SELECTEDVALUE ( 'Vessel Type'[Vessel Type] ),
+			        typeCount & " vessel types"
+			    )
+			VAR yearText = IF ( firstYear = lastYear, firstYear & "", firstYear & " – " & lastYear )
+			RETURN
+			    yearText & "   ·   " & typeText & "   ·   data through " & FORMAT ( [Last Data Date], "mmm yyyy" )
+		displayFolder: 6 Labels & Colors
+		lineageTag: f1f9c992-8c92-5fd6-a64f-378ee54356f7
+
+	/// Dynamic title for the trend chart.
+	measure 'Trend Title' = SELECTEDVALUE ( Metric[Metric], "Arrivals" ) & " per month, with 12-month rolling average"
+		displayFolder: 6 Labels & Colors
+		lineageTag: cf44d849-f85e-5369-9b4e-ba604451fdba
+
+	/// Dynamic title for the ranking chart.
+	measure 'Ranking Title' = SELECTEDVALUE ( Metric[Metric], "Arrivals" ) & " by vessel type"
+		displayFolder: 6 Labels & Colors
+		lineageTag: b8e8c93a-a0ef-506d-adde-ead630e498fe
+
+	/// Dynamic title for the heatmap.
+	measure 'Heatmap Title' = SELECTEDVALUE ( Metric[Metric], "Arrivals" ) & " heatmap · year × month"
+		displayFolder: 6 Labels & Colors
+		lineageTag: e30e88bb-3642-56f2-b823-e21bdb8a061a
+
+	/// Dynamic subtitle: compares ship-size growth with arrivals growth.
+	measure 'Ship Size Insight' =
+			VAR sizeGrowth = [GT per Arrival CAGR]
+			VAR callGrowth = [Arrivals CAGR]
+			RETURN
+			    IF (
+			        NOT ISBLANK ( sizeGrowth ),
+			        "Average tonnage per arrival grew " & FORMAT ( sizeGrowth, "+0.0%;-0.0%" ) & " a year, against "
+			            & FORMAT ( callGrowth, "+0.0%;-0.0%" ) & " a year for arrivals",
+			        "Select at least two full years to see growth rates"
+			    )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 51524e3b-dc17-5ad9-ac0b-b3da54cf9963
+
+	/// Dynamic subtitle naming the vessel type with the largest tonnage share.
+	measure 'Mix Insight' =
+			VAR top =
+			    TOPN ( 1, ALLSELECTED ( 'Vessel Type' ), [GT Share], DESC )
+			VAR topName = MAXX ( top, 'Vessel Type'[Vessel Type] )
+			VAR topShare = MAXX ( top, [GT Share] )
+			RETURN
+			    topName & " carries " & FORMAT ( topShare, "0%" ) & " of all tonnage in the selected period"
+		displayFolder: 6 Labels & Colors
+		lineageTag: b563cfdb-6115-52b9-bc58-ab6e3b1e8222
+
+	/// KPI footer text for Arrivals.
+	measure 'Arrivals Delta Label' =
+			VAR d = [Arrivals YoY %]
+			RETURN
+			    IF (
+			        ISBLANK ( d ),
+			        "No prior 12 months to compare",
+			        IF ( d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( d ), "0.0%" ) & "  vs prior 12 months"
+			    )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 9c076035-71ac-5d8e-8295-52a6ded6679e
+
+	/// KPI footer color for Arrivals: green when up, red when down.
+	measure 'Arrivals Delta Color' =
+			VAR d = [Arrivals YoY %]
+			RETURN
+			    SWITCH ( TRUE (), ISBLANK ( d ), "#5B6578", d >= 0, "#34D399", "#F87171" )
+		displayFolder: 6 Labels & Colors
+		lineageTag: a5443c01-e8a7-5e5a-8f61-d3ce42e07d32
+
+	/// KPI footer text for GT.
+	measure 'GT Delta Label' =
+			VAR d = [GT YoY %]
+			RETURN
+			    IF (
+			        ISBLANK ( d ),
+			        "No prior 12 months to compare",
+			        IF ( d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( d ), "0.0%" ) & "  vs prior 12 months"
+			    )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 3a3d9f2d-9925-5592-bea4-fd70d9e1193a
+
+	/// KPI footer color for GT: green when up, red when down.
+	measure 'GT Delta Color' =
+			VAR d = [GT YoY %]
+			RETURN
+			    SWITCH ( TRUE (), ISBLANK ( d ), "#5B6578", d >= 0, "#34D399", "#F87171" )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 42d7fe40-c88a-5930-8667-0a2f64648be7
+
+	/// KPI footer text for GT per Arrival.
+	measure 'GT per Arrival Delta Label' =
+			VAR d = [GT per Arrival YoY %]
+			RETURN
+			    IF (
+			        ISBLANK ( d ),
+			        "No prior 12 months to compare",
+			        IF ( d >= 0, "▲ ", "▼ " ) & FORMAT ( ABS ( d ), "0.0%" ) & "  vs prior 12 months"
+			    )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 6c58eb78-0a80-5eb8-b987-9d87cee2e59d
+
+	/// KPI footer color for GT per Arrival: green when up, red when down.
+	measure 'GT per Arrival Delta Color' =
+			VAR d = [GT per Arrival YoY %]
+			RETURN
+			    SWITCH ( TRUE (), ISBLANK ( d ), "#5B6578", d >= 0, "#34D399", "#F87171" )
+		displayFolder: 6 Labels & Colors
+		lineageTag: dd9cb6b7-dd7e-53a7-bf30-0c91519d2844
+
+	/// KPI footer for the recovery index.
+	measure 'Recovery Label' = "Tonnage at " & FORMAT ( [GT vs 2019], "0%" ) & " of 2019"
+		displayFolder: 6 Labels & Colors
+		lineageTag: 489e541f-5ead-50fe-89c2-377448c4dfa3
+
+	/// Green when arrivals are back above 2019 levels, amber otherwise.
+	measure 'Recovery Color' = IF ( [Arrivals vs 2019] >= 1, "#34D399", "#FBBF24" )
+		displayFolder: 6 Labels & Colors
+		lineageTag: 1f96e6b2-a966-580f-8364-ab5e80c7208e
+
+	/// Cell color for the heatmap: interpolates from surface to indigo across the selected cells.
+	measure 'Heat Color' =
+			VAR v = [Selected Metric]
+			VAR cells =
+			    CALCULATETABLE (
+			        ADDCOLUMNS ( SUMMARIZE ( Arrivals, 'Calendar'[Year], 'Calendar'[Month Number] ), "@v", [Selected Metric] ),
+			        ALLSELECTED ( 'Calendar' )
+			    )
+			VAR lo = MINX ( cells, [@v] )
+			VAR hi = MAXX ( cells, [@v] )
+			VAR t = POWER ( MAX ( 0, MIN ( 1, DIVIDE ( v - lo, hi - lo ) ) ), 0.9 )
+			VAR r = ROUND ( 21 + ( 124 - 21 ) * t, 0 )
+			VAR g = ROUND ( 28 + ( 131 - 28 ) * t, 0 )
+			VAR b = ROUND ( 44 + ( 255 - 44 ) * t, 0 )
+			VAR hx = "0123456789ABCDEF"
+			RETURN
+			    IF (
+			        ISBLANK ( v ),
+			        "#0D121D",
+			        "#" & MID ( hx, INT ( r / 16 ) + 1, 1 ) & MID ( hx, MOD ( r, 16 ) + 1, 1 ) & MID ( hx, INT ( g / 16 ) + 1, 1 ) & MID ( hx, MOD ( g, 16 ) + 1, 1 ) & MID ( hx, INT ( b / 16 ) + 1, 1 ) & MID ( hx, MOD ( b, 16 ) + 1, 1 )
+			    )
+		displayFolder: 6 Labels & Colors
+		lineageTag: bc3fddc6-3347-5e49-9697-7e2491420e8d
+
+	/// SVG sparkline of the selected metric's monthly average for each year in the selection.
+	measure 'Trend Sparkline' =
+			VAR W = 150
+			VAR H = 26
+			VAR P = 4
+			VAR pts =
+			    ADDCOLUMNS (
+			        FILTER ( VALUES ( 'Calendar'[Year] ), NOT ISBLANK ( [Selected Metric Monthly Avg] ) ),
+			        "@v", [Selected Metric Monthly Avg]
+			    )
+			VAR n = COUNTROWS ( pts )
+			VAR x0 = MINX ( pts, 'Calendar'[Year] )
+			VAR x1 = MAXX ( pts, 'Calendar'[Year] )
+			VAR lo = MINX ( pts, [@v] )
+			VAR hi = MAXX ( pts, [@v] )
+			VAR xs = DIVIDE ( W - 2 * P, x1 - x0 )
+			VAR ys = DIVIDE ( H - 2 * P, hi - lo, 0 )
+			VAR firstV = MAXX ( FILTER ( pts, 'Calendar'[Year] = x0 ), [@v] )
+			VAR lastV = MAXX ( FILTER ( pts, 'Calendar'[Year] = x1 ), [@v] )
+			VAR c = IF ( lastV >= firstV, "%232DD4BF", "%23F87171" )
+			VAR line =
+			    CONCATENATEX (
+			        pts,
+			        FORMAT ( P + ( 'Calendar'[Year] - x0 ) * xs, "0.0", "en-US" ) & ","
+			            & FORMAT ( H - P - ( [@v] - lo ) * ys, "0.0", "en-US" ),
+			        " ",
+			        'Calendar'[Year], ASC
+			    )
+			VAR lastX = FORMAT ( W - P, "0.0", "en-US" )
+			VAR lastY = FORMAT ( H - P - ( lastV - lo ) * ys, "0.0", "en-US" )
+			VAR svg =
+			    "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='" & W & "' height='" & H & "' viewBox='0 0 " & W & " " & H & "'>"
+			        & "<defs><linearGradient id='g' x1='0' y1='0' x2='0' y2='1'><stop offset='0' stop-color='" & c & "' stop-opacity='0.35'/><stop offset='1' stop-color='" & c & "' stop-opacity='0'/></linearGradient></defs>"
+			        & "<polygon points='" & P & "," & ( H - P ) & " " & line & " " & ( W - P ) & "," & ( H - P ) & "' fill='url(%23g)'/>"
+			        & "<polyline points='" & line & "' fill='none' stroke='" & c & "' stroke-width='1.6' stroke-linejoin='round' stroke-linecap='round'/>"
+			        & "<circle cx='" & lastX & "' cy='" & lastY & "' r='2.8' fill='" & c & "'/>"
+			        & "</svg>"
+			RETURN
+			    IF ( n >= 2, svg )
+		displayFolder: 5 SVG Visuals
+		lineageTag: 0b0c7e85-6fbf-5e1c-8a00-d96ca52f95ce
+		dataCategory: ImageUrl
+
+	/// SVG bar: value relative to the largest vessel type, labelled with its share (or value for ratios).
+	measure 'Scale Bar' =
+			VAR W = 170
+			VAR H = 22
+			VAR BW = 110
+			VAR metric = SELECTEDVALUE ( Metric[Metric], "Arrivals" )
+			VAR v = [Selected Metric]
+			VAR maxV = MAXX ( ALLSELECTED ( 'Vessel Type' ), [Selected Metric] )
+			VAR total = CALCULATE ( [Selected Metric], ALLSELECTED ( 'Vessel Type' ) )
+			VAR pct = MIN ( 1, DIVIDE ( v, maxV ) )
+			VAR label =
+			    IF ( metric = "GT per Arrival", FORMAT ( v, "#,0" ), FORMAT ( DIVIDE ( v, total ), "0.0%" ) )
+			VAR fillW = FORMAT ( MAX ( 2, BW * pct ), "0.0", "en-US" )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( v ),
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='" & W & "' height='" & H & "' viewBox='0 0 " & W & " " & H & "'>"
+			            & "<defs><linearGradient id='b' x1='0' y1='0' x2='1' y2='0'><stop offset='0' stop-color='#E6EAF2'/><stop offset='1' stop-color='%237C83FF'/></linearGradient></defs>"
+			            & "<rect x='0' y='8' width='" & BW & "' height='6' rx='3' fill='#E6EAF2'/>"
+			            & "<rect x='0' y='8' width='" & fillW & "' height='6' rx='3' fill='url(%23b)'/>"
+			            & "<text x='" & ( BW + 10 ) & "' y='15' font-family='Segoe UI, sans-serif' font-size='11' fill='#E6EAF2'>" & label & "</text>"
+			            & "</svg>"
+			    )
+		displayFolder: 5 SVG Visuals
+		lineageTag: 6521363c-9e9c-5335-97df-837a5d614e87
+		dataCategory: ImageUrl
+
+	/// SVG pill showing the trailing-12-month change of the selected metric.
+	measure 'YoY Pill' =
+			VAR d = [Selected Metric YoY %]
+			VAR up = d >= 0
+			VAR c = IF ( up, "%2334D399", "%23F87171" )
+			VAR bg = IF ( up, "%2334D399", "%23F87171" )
+			VAR txt = FORMAT ( ABS ( d ), "0.0%" )
+			VAR arrow =
+			    IF (
+			        up,
+			        "<polygon points='10,15 14,8 18,15' fill='" & c & "'/>",
+			        "<polygon points='10,8 14,15 18,8' fill='" & c & "'/>"
+			    )
+			RETURN
+			    IF (
+			        NOT ISBLANK ( d ),
+			        "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='76' height='22' viewBox='0 0 76 22'>"
+			            & "<rect x='0.5' y='0.5' width='75' height='21' rx='10.5' fill='" & bg & "' fill-opacity='0.14' stroke='" & c & "' stroke-opacity='0.35'/>"
+			            & arrow
+			            & "<text x='24' y='15.5' font-family='Segoe UI, sans-serif' font-size='11' font-weight='600' fill='" & c & "'>" & txt & "</text>"
+			            & "</svg>"
+			    )
+		displayFolder: 5 SVG Visuals
+		lineageTag: 9294df41-3276-55ef-aa84-bf9807683cb1
+		dataCategory: ImageUrl
+
+	column Placeholder
+		dataType: string
+		isHidden
+		lineageTag: dfa5699c-4c04-5686-83e3-050e5105191b
+		summarizeBy: none
+		sourceColumn: Placeholder
+
+		annotation SummarizationSetBy = Automatic
+
+	partition _Measures = m
+		mode: import
+		source =
+				let
+				    Source = #table(type table [Placeholder = text], {})
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

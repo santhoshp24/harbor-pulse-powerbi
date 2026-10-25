@@ -1,0 +1,63 @@
+table 'Vessel Type'
+	lineageTag: 9835d737-70e8-5e32-87dd-46bc0b30d0af
+
+	column 'Vessel Type'
+		dataType: string
+		lineageTag: eb6fabae-c3d4-5521-8b9f-af991d11a2d2
+		summarizeBy: none
+		sourceColumn: Vessel Type
+		sortByColumn: 'Type Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Segment
+		dataType: string
+		lineageTag: e998db98-8cce-518d-9494-950271446fa1
+		summarizeBy: none
+		sourceColumn: Segment
+		sortByColumn: 'Segment Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Type Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 77433d9f-9675-5026-9796-e69f1f0c6604
+		summarizeBy: none
+		sourceColumn: Type Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Segment Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 0961faba-f6c9-506e-b2a2-d4448bcfcc49
+		summarizeBy: none
+		sourceColumn: Segment Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	partition 'Vessel Type' = m
+		mode: import
+		source =
+				let
+				    Source = #table(
+				        type table [Vessel Type = text, Segment = text, Type Sort = Int64.Type, Segment Sort = Int64.Type],
+				        {
+				            {"Container", "Cargo", 1, 1},
+				            {"Tanker", "Cargo", 2, 1},
+				            {"Bulk Carrier", "Cargo", 3, 1},
+				            {"Freighter", "Cargo", 4, 1},
+				            {"Passenger", "Passenger", 5, 2},
+				            {"Tug", "Harbour Craft", 6, 3},
+				            {"Barges", "Harbour Craft", 7, 3},
+				            {"Miscellaneous", "Other", 8, 4}
+				        }
+				    )
+				in
+				    Source
+
+	annotation PBI_ResultType = Table
+

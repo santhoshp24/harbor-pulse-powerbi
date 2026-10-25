@@ -1,0 +1,132 @@
+table Calendar
+	lineageTag: 92466824-9bb8-5f70-9536-1eed89a45623
+	dataCategory: Time
+
+	column Date
+		dataType: dateTime
+		isKey
+		formatString: dd mmm yyyy
+		lineageTag: ffa6a92a-ebce-5d2f-9f43-2a53d7abeaeb
+		summarizeBy: none
+		sourceColumn: Date
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column Year
+		dataType: int64
+		formatString: 0
+		lineageTag: 09372876-bd40-52a1-a829-a69cd6869315
+		summarizeBy: none
+		sourceColumn: Year
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Number'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: d4126a7a-b9be-5e0c-b0ed-29e560a897cc
+		summarizeBy: none
+		sourceColumn: Month Number
+
+		annotation SummarizationSetBy = Automatic
+
+	column Month
+		dataType: string
+		lineageTag: 4246eb5f-77c2-5ef5-b4c4-1e803adb90d1
+		summarizeBy: none
+		sourceColumn: Month
+		sortByColumn: 'Month Number'
+
+		annotation SummarizationSetBy = Automatic
+
+	column Quarter
+		dataType: string
+		lineageTag: 3acc8503-2c94-5ba2-a900-f44c7b144d7a
+		summarizeBy: none
+		sourceColumn: Quarter
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Month Start'
+		dataType: dateTime
+		formatString: mmm yyyy
+		lineageTag: ca86cc60-a445-583e-977f-a2ea2143c8cf
+		summarizeBy: none
+		sourceColumn: Month Start
+
+		annotation SummarizationSetBy = Automatic
+
+		annotation UnderlyingDateTimeDataType = Date
+
+	column 'Year Month'
+		dataType: string
+		lineageTag: 39b73bd2-a12c-500d-a1f4-3f4b21afaf30
+		summarizeBy: none
+		sourceColumn: Year Month
+		sortByColumn: 'Year Month Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Year Month Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 328a542b-3b38-5bc0-b92e-99592a5532ff
+		summarizeBy: none
+		sourceColumn: Year Month Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	column Decade
+		dataType: string
+		lineageTag: e877c6c5-6922-5285-b336-f3611e4ee03e
+		summarizeBy: none
+		sourceColumn: Decade
+
+		annotation SummarizationSetBy = Automatic
+
+	column Era
+		dataType: string
+		lineageTag: 86a3f81f-0f88-54e4-bd21-14cd5f815ae2
+		summarizeBy: none
+		sourceColumn: Era
+		sortByColumn: 'Era Sort'
+
+		annotation SummarizationSetBy = Automatic
+
+	column 'Era Sort'
+		dataType: int64
+		isHidden
+		formatString: 0
+		lineageTag: 741d3e09-5d3b-5f85-9bdf-6d38b750d24c
+		summarizeBy: none
+		sourceColumn: Era Sort
+
+		annotation SummarizationSetBy = Automatic
+
+	partition Calendar = m
+		mode: import
+		source =
+				let
+				    StartDate = #date(1995, 1, 1),
+				    EndDate = #date(2026, 12, 31),
+				    Dates = List.Dates(StartDate, Duration.Days(EndDate - StartDate) + 1, #duration(1, 0, 0, 0)),
+				    Base = Table.FromList(Dates, Splitter.SplitByNothing(), type table [Date = date]),
+				    AddYear = Table.AddColumn(Base, "Year", each Date.Year([Date]), Int64.Type),
+				    AddMonthNumber = Table.AddColumn(AddYear, "Month Number", each Date.Month([Date]), Int64.Type),
+				    AddMonth = Table.AddColumn(AddMonthNumber, "Month", each Date.ToText([Date], "MMM", "en-US"), type text),
+				    AddQuarter = Table.AddColumn(AddMonth, "Quarter", each "Q" & Text.From(Date.QuarterOfYear([Date])), type text),
+				    AddMonthStart = Table.AddColumn(AddQuarter, "Month Start", each Date.StartOfMonth([Date]), type date),
+				    AddYearMonth = Table.AddColumn(AddMonthStart, "Year Month", each Date.ToText([Date], "MMM yyyy", "en-US"), type text),
+				    AddYearMonthSort = Table.AddColumn(AddYearMonth, "Year Month Sort", each Date.Year([Date]) * 100 + Date.Month([Date]), Int64.Type),
+				    AddDecade = Table.AddColumn(AddYearMonthSort, "Decade", each Text.From(Number.IntegerDivide(Date.Year([Date]), 10) * 10) & "s", type text),
+				    AddEra = Table.AddColumn(AddDecade, "Era", each if Date.Year([Date]) < 2020 then "Pre-COVID" else if Date.Year([Date]) <= 2021 then "COVID" else "Recovery", type text),
+				    AddEraSort = Table.AddColumn(AddEra, "Era Sort", each if Date.Year([Date]) < 2020 then 1 else if Date.Year([Date]) <= 2021 then 2 else 3, Int64.Type)
+				in
+				    AddEraSort
+
+	annotation PBI_ResultType = Table
+
