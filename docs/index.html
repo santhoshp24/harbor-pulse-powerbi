@@ -1,0 +1,282 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Harbor Pulse · Power BI Dashboard</title>
+  <meta name="description" content="Harbor Pulse: a two-page Power BI dashboard on 30 years of monthly vessel arrivals. TMDL model, DAX time intelligence and SVG-in-DAX visuals. By Santhosh Pothula.">
+
+  <!-- Social preview (LinkedIn, X, Slack) -->
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="Harbor Pulse · Power BI Dashboard">
+  <meta property="og:description" content="30 years of vessel arrivals: fewer calls, bigger ships. Power BI · DAX · SVG-in-DAX visuals.">
+  <meta property="og:image" content="https://santhoshp24.github.io/harbor-pulse-powerbi/img/overview.png">
+  <meta property="og:url" content="https://santhoshp24.github.io/harbor-pulse-powerbi/">
+  <meta name="twitter:card" content="summary_large_image">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --canvas: #0A0E17;
+      --surface: #111725;
+      --surface-2: #1A2233;
+      --border: #1E2638;
+      --text: #E6EAF2;
+      --strong: #F5F7FB;
+      --muted: #8A94A7;
+      --faint: #5B6578;
+      --accent: #7C83FF;
+      --teal: #2DD4BF;
+      --pink: #F472B6;
+      --amber: #FBBF24;
+      --radius: 14px;
+    }
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--canvas);
+      color: var(--text);
+      font-family: Inter, "Segoe UI", system-ui, sans-serif;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: inherit; }
+    .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
+
+    /* Nav */
+    nav { position: sticky; top: 0; z-index: 10; background: rgba(10, 14, 23, 0.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); }
+    nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+    .brand { font-weight: 600; letter-spacing: -0.01em; text-decoration: none; }
+    .brand span { color: var(--accent); margin-right: 6px; }
+    .navlinks { display: flex; gap: 22px; font-size: 14px; }
+    .navlinks a { color: var(--muted); text-decoration: none; }
+    .navlinks a:hover { color: var(--text); }
+
+    /* Hero */
+    header { padding: 88px 0 56px; position: relative; overflow: hidden; }
+    header::before {
+      content: ""; position: absolute; inset: -40% -10% auto; height: 520px;
+      background: radial-gradient(closest-side, rgba(124, 131, 255, 0.22), transparent 70%);
+      pointer-events: none;
+    }
+    .eyebrow { display: inline-flex; gap: 8px; align-items: center; font-size: 13px; color: var(--muted); border: 1px solid var(--border); background: var(--surface); border-radius: 999px; padding: 5px 12px; }
+    .eyebrow i { width: 7px; height: 7px; border-radius: 50%; background: var(--teal); display: inline-block; }
+    h1 { font-size: clamp(38px, 6vw, 64px); line-height: 1.05; letter-spacing: -0.035em; margin: 22px 0 18px; color: var(--strong); font-weight: 700; }
+    h1 em { font-style: normal; background: linear-gradient(90deg, var(--accent), var(--teal)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    .lede { font-size: 19px; color: var(--muted); max-width: 640px; margin: 0 0 32px; }
+    .ctas { display: flex; flex-wrap: wrap; gap: 12px; }
+    .btn { display: inline-flex; align-items: center; gap: 8px; padding: 11px 18px; border-radius: 10px; font-weight: 600; font-size: 15px; text-decoration: none; border: 1px solid var(--border); background: var(--surface-2); transition: transform .15s ease, background .15s ease; }
+    .btn:hover { transform: translateY(-1px); background: #242E44; }
+    .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .btn.primary:hover { background: #8D93FF; }
+    .tags { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 28px; }
+    .tag { font-size: 12.5px; color: var(--muted); border: 1px solid var(--border); border-radius: 6px; padding: 3px 9px; }
+
+    /* Sections */
+    section { padding: 56px 0; }
+    .kicker { font-size: 12px; letter-spacing: .12em; text-transform: uppercase; color: var(--accent); font-weight: 600; }
+    h2 { font-size: clamp(26px, 3.4vw, 36px); letter-spacing: -0.02em; margin: 8px 0 14px; color: var(--strong); }
+    .sub { color: var(--muted); max-width: 680px; margin: 0 0 28px; }
+
+    .frame { border: 1px solid var(--border); border-radius: var(--radius); background: var(--surface); overflow: hidden; box-shadow: 0 30px 80px -30px rgba(0, 0, 0, .7); }
+    .frame img { display: block; width: 100%; height: auto; }
+    .embed { position: relative; aspect-ratio: 16 / 9.4; }
+    .embed iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+    .embed-placeholder { position: absolute; inset: 0; }
+    .embed-placeholder img { width: 100%; height: 100%; object-fit: cover; filter: saturate(.9) brightness(.55); }
+    .embed-placeholder div { position: absolute; inset: 0; display: grid; place-content: center; text-align: center; gap: 10px; padding: 20px; }
+    .embed-placeholder strong { font-size: 18px; color: var(--strong); }
+    .embed-placeholder span { color: var(--muted); font-size: 14px; }
+
+    .shots { display: grid; gap: 28px; }
+    figure { margin: 0; }
+    figcaption { color: var(--muted); font-size: 14px; margin-top: 12px; }
+    figcaption b { color: var(--text); font-weight: 600; }
+
+    /* Insights */
+    .grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+    .card { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 22px; position: relative; }
+    .card::before { content: ""; position: absolute; left: 0; top: 22px; bottom: 22px; width: 3px; border-radius: 3px; background: var(--c, var(--accent)); }
+    .stat { font-size: 40px; font-weight: 700; letter-spacing: -0.03em; color: var(--strong); line-height: 1.1; }
+    .card h3 { margin: 10px 0 6px; font-size: 16px; color: var(--text); }
+    .card p { margin: 0; color: var(--muted); font-size: 14.5px; }
+
+    /* Build */
+    .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; }
+    .feature { border: 1px solid var(--border); background: var(--surface); border-radius: var(--radius); padding: 20px 22px; }
+    .feature h3 { margin: 0 0 6px; font-size: 16px; display: flex; align-items: center; gap: 10px; }
+    .feature h3 i { width: 26px; height: 26px; border-radius: 7px; display: inline-grid; place-items: center; font-style: normal; font-size: 13px; background: rgba(124, 131, 255, .14); color: var(--accent); }
+    .feature p { margin: 0; color: var(--muted); font-size: 14.5px; }
+    code { font-family: ui-monospace, "Cascadia Code", Consolas, monospace; font-size: .9em; background: var(--surface-2); border: 1px solid var(--border); border-radius: 5px; padding: 1px 6px; color: var(--text); }
+    pre { margin: 0; overflow-x: auto; background: #0D121D; border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; font-size: 13px; line-height: 1.55; color: #C9D1E0; }
+    pre .k { color: var(--accent); } pre .s { color: var(--teal); } pre .c { color: var(--faint); }
+
+    footer { border-top: 1px solid var(--border); padding: 32px 0 48px; color: var(--muted); font-size: 14px; }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 12px; justify-content: space-between; }
+
+    @media (max-width: 860px) {
+      .grid3, .grid2 { grid-template-columns: 1fr; }
+      .navlinks { display: none; }
+      header { padding: 64px 0 40px; }
+      .embed { aspect-ratio: 4 / 3; }
+    }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="brand" href="#"><span>◆</span>Harbor Pulse</a>
+    <div class="navlinks">
+      <a href="#live">Live report</a>
+      <a href="#insights">Insights</a>
+      <a href="#build">How it's built</a>
+      <a href="https://github.com/santhoshp24/harbor-pulse-powerbi">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<header>
+  <div class="wrap">
+    <span class="eyebrow"><i></i> Power BI portfolio project</span>
+    <h1>30 years of port traffic.<br><em>Fewer calls, bigger ships.</em></h1>
+    <p class="lede">A two-page Power BI dashboard exploring 3,000+ monthly records of vessel arrivals and gross tonnage (1995 to 2026) by vessel type, with trailing-12-month KPIs, a COVID recovery index and DAX-generated SVG visuals.</p>
+    <div class="ctas">
+      <a class="btn primary" href="#live">View the dashboard →</a>
+      <a class="btn" href="https://github.com/santhoshp24/harbor-pulse-powerbi">Source on GitHub</a>
+    </div>
+    <div class="tags">
+      <span class="tag">Power BI</span><span class="tag">DAX</span><span class="tag">TMDL / PBIR</span>
+      <span class="tag">Power Query (M)</span><span class="tag">SVG-in-DAX</span><span class="tag">Data storytelling</span>
+    </div>
+  </div>
+</header>
+
+<section id="live">
+  <div class="wrap">
+    <div class="kicker">Interactive</div>
+    <h2>Explore the live report</h2>
+    <p class="sub">Use the metric switcher, year range, era and vessel-type slicers. Every chart, KPI and title responds.</p>
+    <div class="frame embed" id="embed">
+      <div class="embed-placeholder">
+        <img src="img/overview.png" alt="">
+        <div>
+          <strong>Interactive version coming soon</strong>
+          <span>Screenshots of both pages are below.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section>
+  <div class="wrap shots">
+    <figure>
+      <div class="frame"><img src="img/overview.png" alt="Overview page: four KPI tiles, a monthly arrivals trend with a 12-month rolling average, a ranking by vessel type, a tonnage-mix area chart, and an arrivals versus average-tonnage combo chart" loading="lazy"></div>
+      <figcaption><b>Overview:</b> KPI tiles compare the last 12 months with the 12 before. The trend shows the 2020 collapse and the recovery, and the combo chart tells the main story: average ship size keeps rising while arrival counts stay flat.</figcaption>
+    </figure>
+    <figure>
+      <div class="frame"><img src="img/deep-dive.png" alt="Deep Dive page: a vessel-type scorecard with SVG share bars, change pills and sparklines, a decomposition tree, and a year-by-month heatmap" loading="lazy"></div>
+      <figcaption><b>Deep Dive:</b> a scorecard whose share bars, change pills and sparklines are SVG images generated by DAX measures, plus a decomposition tree and a year × month heatmap. All of it follows the metric switcher.</figcaption>
+    </figure>
+  </div>
+</section>
+
+<section id="insights">
+  <div class="wrap">
+    <div class="kicker">Findings</div>
+    <h2>What the data says</h2>
+    <p class="sub">Figures cover the full 1995 to 2026 range unless noted.</p>
+    <div class="grid3">
+      <div class="card" style="--c: var(--teal)">
+        <div class="stat">+4.3%</div>
+        <h3>Ships keep getting bigger</h3>
+        <p>Average gross tonnage per arrival grew 4.3% a year, from about 6.8K GT in 1995 to about 24K GT in 2025. Arrival counts grew just 0.8% a year.</p>
+      </div>
+      <div class="card" style="--c: var(--accent)">
+        <div class="stat">100%</div>
+        <h3>Arrivals are back to 2019 levels</h3>
+        <p>Annual arrivals fell 37% between 2019 and 2021. The last 12 months are back to 2019 levels, and tonnage is already 117% of its 2019 level.</p>
+      </div>
+      <div class="card" style="--c: var(--pink)">
+        <div class="stat">61.3bn</div>
+        <h3>GT across 4.1M arrivals</h3>
+        <p>Passenger craft make up the most arrivals, but container ships and tankers carry most of the tonnage. Counting calls alone gives the wrong picture.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="build">
+  <div class="wrap">
+    <div class="kicker">Engineering</div>
+    <h2>How it's built</h2>
+    <p class="sub">Saved as a Power BI Project (PBIP): the model is TMDL and the report is PBIR JSON, so every measure and visual is versioned as readable text.</p>
+    <div class="grid2">
+      <div class="feature">
+        <h3><i>◇</i>Star-schema model</h3>
+        <p>An arrivals fact table with Calendar (marked date table, era and decade), Vessel Type (segment hierarchy) and a disconnected Metric table that drives the switcher.</p>
+      </div>
+      <div class="feature">
+        <h3><i>ƒ</i>44 DAX measures</h3>
+        <p>Trailing-12-month change, a recovery index against 2019, CAGR over complete years, a 12-month rolling average, share, rank, and dynamic titles and subtitles.</p>
+      </div>
+      <div class="feature">
+        <h3><i>▦</i>SVG-in-DAX visuals</h3>
+        <p>Sparklines, gradient share bars and change pills are built as <code>data:image/svg+xml</code> strings in DAX and shown in a native table. No custom-visual imports needed.</p>
+      </div>
+      <div class="feature">
+        <h3><i>◐</i>Custom dark theme</h3>
+        <p>A hand-written theme JSON with surface layers, an indigo and teal accent palette, Segoe UI type, and green/red conditional colors for gains and losses.</p>
+      </div>
+      <div class="feature">
+        <h3><i>⇄</i>Synced interactivity</h3>
+        <p>Year, era, segment, vessel-type and metric slicers are synced across both pages, with page navigation and a one-click reset.</p>
+      </div>
+      <div class="feature">
+        <h3><i>☁</i>Cloud data source</h3>
+        <p>Power Query loads the CSV straight from this GitHub repo with <code>Web.Contents</code>, so the model refreshes anywhere without a gateway.</p>
+      </div>
+    </div>
+
+    <p class="sub" style="margin-top:36px">Example: the trailing-12-month change behind each KPI tile.</p>
+<pre><span class="k">Arrivals L12M</span> =
+<span class="k">VAR</span> a = [Anchor Date]   <span class="c">-- end of the latest month in the current selection</span>
+<span class="k">RETURN</span>
+    <span class="k">IF</span> ( <span class="k">NOT ISBLANK</span> ( a ),
+        <span class="k">CALCULATE</span> ( [Vessel Arrivals], <span class="k">DATESINPERIOD</span> ( 'Calendar'[Date], a, -12, <span class="s">MONTH</span> ) ) )
+
+<span class="k">Arrivals YoY %</span> =
+<span class="k">DIVIDE</span> ( [Arrivals L12M] - [Arrivals Prior L12M], [Arrivals Prior L12M] )</pre>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Built by <b style="color:var(--text)">Santhosh Pothula</b> · Power BI · DAX · Power Query</span>
+    <a href="https://github.com/santhoshp24/harbor-pulse-powerbi">github.com/santhoshp24/harbor-pulse-powerbi</a>
+  </div>
+</footer>
+
+<script>
+  // Paste the Power BI "Publish to web" embed URL here (File > Embed report > Publish to web).
+  // Example: "https://app.powerbi.com/view?r=eyJrIjoi..."
+  const EMBED_URL = "";
+
+  if (EMBED_URL) {
+    const box = document.getElementById("embed");
+    box.innerHTML = "";
+    const frame = document.createElement("iframe");
+    frame.src = EMBED_URL;
+    frame.title = "Harbor Pulse Power BI report";
+    frame.allowFullscreen = true;
+    frame.loading = "lazy";
+    box.appendChild(frame);
+  }
+</script>
+</body>
+</html>
