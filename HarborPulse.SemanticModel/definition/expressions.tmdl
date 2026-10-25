@@ -1,0 +1,7 @@
+expression CsvFolder = "C:\Users\Admin\OneDrive\Desktop\portfolio-dashboards" meta [IsParameterQuery=true, Type="Text", IsParameterQueryRequired=true]
+	lineageTag: 3fcf2df5-e683-56cf-a202-9c2464292615
+
+	annotation PBI_NavigationStepName = Navigation
+
+	annotation PBI_ResultType = Text
+

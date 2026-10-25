@@ -46,7 +46,7 @@ table Arrivals
 		mode: import
 		source =
 				let
-				    Source = Csv.Document(Web.Contents("https://raw.githubusercontent.com/santhoshp24/harbor-pulse-powerbi/main/data/vessel_arrivals_monthly.csv"), [Delimiter = ",", Columns = 4, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
+				  Source = Csv.Document(Web.Contents("https://raw.githubusercontent.com/santhoshp24/harbor-pulse-powerbi/main/data/vessel_arrivals_monthly.csv"), [Delimiter = ",", Columns = 4, Encoding = 65001, QuoteStyle = QuoteStyle.Csv]),
 				    Promoted = Table.PromoteHeaders(Source, [PromoteAllScalars = true]),
 				    Typed = Table.TransformColumnTypes(Promoted, {{"month", type date}, {"vessel_type", type text}, {"number_of_vessels", Int64.Type}, {"gross_tonnage", type number}}, "en-US"),
 				    Renamed = Table.RenameColumns(Typed, {{"month", "Month"}, {"vessel_type", "Vessel Type"}, {"number_of_vessels", "Vessels"}, {"gross_tonnage", "Gross Tonnage (k GT)"}})
