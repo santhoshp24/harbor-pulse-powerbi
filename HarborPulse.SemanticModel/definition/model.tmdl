@@ -8,7 +8,7 @@ model Model
 
 annotation __PBI_TimeIntelligenceEnabled = 0
 
-annotation PBI_QueryOrder = ["CsvFolder","Arrivals","Calendar","Vessel Type","Metric","_Measures"]
+annotation PBI_QueryOrder = ["Arrivals","Calendar","Vessel Type","Metric","_Measures"]
 
 annotation PBI_ProTooling = ["DevMode"]
 
